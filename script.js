@@ -24,6 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeGame() {
+        // Go to fullscreen mode for an immersive experience
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(err => {
+                // It's fine if the user denies fullscreen, so we just log the error for debugging.
+                console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        }
+
         // Play ambient music. It will loop automatically.
         if (ui.sounds.ambient) {
             ui.sounds.ambient.volume = 0.3; // Lower volume for background music
