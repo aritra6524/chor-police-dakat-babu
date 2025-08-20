@@ -1,11 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const roles = [
-        { name: 'Babu', points: 1000, icon: '👑' },
-        { name: 'Dakat', points: 800, icon: '🔥' },
-        { name: 'Police', points: 500, icon: '🛡️' },
-        { name: 'Chor', points: 0, icon: '🎭' }
-    ];
+import { ROLES, MAX_ROUNDS } from './config.js';
+import * as ui from './ui.js'; // Import all UI functions and elements
 
+document.addEventListener('DOMContentLoaded', () => {
     // Animate title on load
     const setupTitle = document.querySelector('#setup-container h1');
     if (setupTitle) {
@@ -13,52 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
             `<span class="title-letter" style="animation-delay: ${i * 50}ms">${letter === ' ' ? '&nbsp;' : letter}</span>`).join('');
     }
 
-    const setupContainer = document.getElementById('setup-container');
-    const gameContainer = document.querySelector('.game-container');
-    const startGameButton = document.getElementById('start-game-button');
-    const playerInputs = [
-        document.getElementById('p1-name'),
-        document.getElementById('p2-name'),
-        document.getElementById('p3-name'),
-        document.getElementById('p4-name')
-    ];
-
-    const statusMessage = document.getElementById('status-message');
-    const babuInstructionPanel = document.getElementById('babu-instruction-panel');
-    const instructChorButton = document.getElementById('instruct-chor-button');
-    const instructDakatButton = document.getElementById('instruct-dakat-button');
-    const actionButton = document.getElementById('action-button');
-    const gameBoard = document.getElementById('game-board');
-    const playerCards = document.querySelectorAll('.player-card');
-    const playerDisplayNames = document.querySelectorAll('.player-name');
-    const modalOverlay = document.getElementById('modal-overlay');
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-    const modalScoreboardGrid = document.getElementById('modal-scoreboard-grid');
-    const nextRoundButton = document.getElementById('next-round-button');
-    const winnerBanner = document.getElementById('winner-banner');
-    const persistentScoreboard = document.getElementById('persistent-scoreboard');
-    const howToPlayButton = document.getElementById('how-to-play-button');
-    const rulesModalOverlay = document.getElementById('rules-modal-overlay');
-    const rulesModalContent = document.getElementById('rules-modal-content');
-    const closeRulesButton = document.getElementById('close-rules-button');
-
-    const sounds = {
-        click: document.getElementById('sound-click'),
-        deal: document.getElementById('sound-deal'),
-        flip: document.getElementById('sound-flip'),
-        correct: document.getElementById('sound-correct'),
-        wrong: document.getElementById('sound-wrong'),
-        win: document.getElementById('sound-win'),
-        ambient: document.getElementById('sound-ambient')
-    };
-
-
     let players = [];
     let playerRoles = [];
     let targetRoleName = null;
     let roundNumber = 0;
-    const MAX_ROUNDS = 5;
     let gameState = 'SETUP'; // SETUP, INITIAL, BABU_INSTRUCTS, POLICE_GUESS, ROUND_OVER, GAME_OVER
 
     function shuffle(array) {
@@ -69,63 +23,52 @@ document.addEventListener('DOMContentLoaded', () => {
         return array;
     }
 
-    function playSound(sound) {
-        if (sound) {
-            sound.currentTime = 0; // Rewind to the start
-            // The play() method returns a Promise which can be useful for handling errors
-            sound.play().catch(error => console.error(`Audio play failed for ${sound.id}: ${error}`));
-        }
-    }
-
     function initializeGame() {
         // Play ambient music. It will loop automatically.
-        if (sounds.ambient) {
-            sounds.ambient.volume = 0.3; // Lower volume for background music
-            sounds.ambient.play().catch(error => {
+        if (ui.sounds.ambient) {
+            ui.sounds.ambient.volume = 0.3; // Lower volume for background music
+            ui.sounds.ambient.play().catch(error => {
                 // Autoplay is often blocked by browsers until a user interaction.
                 // This is fine since initializeGame is called on a button click.
                 console.error(`Ambient audio play failed: ${error}`);
             });
         }
-        players = playerInputs.map((input, index) => ({
+        players = ui.elements.playerInputs.map((input, index) => ({
             name: input.value.trim() || `Player ${index + 1}`,
             score: 0,
             lastRoundScore: 0
         }));
 
-        setupContainer.classList.add('hidden');
-        gameContainer.classList.remove('hidden');
-        gameContainer.classList.add('animate-fade-in');
+        ui.elements.setupContainer.classList.add('hidden');
+        ui.elements.gameContainer.classList.remove('hidden');
+        ui.elements.gameContainer.classList.add('animate-fade-in');
 
-        playerDisplayNames.forEach((nameEl, index) => {
+        ui.elements.playerDisplayNames.forEach((nameEl, index) => {
             nameEl.textContent = players[index].name;
         });
 
         gameState = 'INITIAL';
         updatePersistentScoreboard();
-        actionButton.classList.add('is-waiting');
-        updateStatusMessage('The stage is set. Begin the round when ready.');
+        ui.elements.actionButton.classList.add('is-waiting');
+        ui.updateStatusMessage('The stage is set. Begin the round when ready.');
     }
 
     function updatePersistentScoreboard() {
+        const scoreEntries = ui.elements.persistentScoreboard.querySelectorAll('.score-entry');
         let scoreboardHTML = '';
-        // Sort by score to show rank implicitly
-        const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
-        sortedPlayers.forEach(player => {
-            scoreboardHTML += `<div class="score-entry"><strong>${player.name}:</strong> ${player.score} pts</div>`;
+        players.forEach((player, index) => {
+            const oldEntry = scoreEntries[index];
+            const oldScore = oldEntry ? oldEntry.textContent : null;
+            const newScore = `${player.score} pts`;
+            // Add animation class only if the score has changed
+            const animationClass = (oldEntry && oldScore !== newScore) ? 'animate-score-update' : '';
+            scoreboardHTML += `<div class="score-entry ${animationClass}">${newScore}</div>`;
         });
-        persistentScoreboard.innerHTML = scoreboardHTML;
-    }
-
-    function updateStatusMessage(newMessage) {
-        statusMessage.classList.remove('animate-update');
-        void statusMessage.offsetWidth; // Trigger reflow to restart animation
-        statusMessage.textContent = newMessage;
-        statusMessage.classList.add('animate-update');
+        ui.elements.persistentScoreboard.innerHTML = scoreboardHTML;
     }
 
     function resetCards() {
-        playerCards.forEach((card, index) => {
+        ui.elements.playerCards.forEach((card, index) => {
             card.classList.remove(
                 'flipped',
                 'is-clickable',
@@ -150,9 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function startRound() {
         roundNumber++;
         resetCards();
-        playerRoles = shuffle([...roles]);
+        playerRoles = shuffle([...ROLES]);
 
-        playerCards.forEach((card, index) => {
+        ui.elements.playerCards.forEach((card, index) => {
             // Hide card initially to animate it in
             card.style.opacity = '0';
             const role = playerRoles[index];
@@ -166,14 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 card.style.opacity = '1';
                 card.classList.add('animate-deal');
-                playSound(sounds.deal);
+                ui.playSound(ui.sounds.deal);
             }, 150 * (index + 1));
         });
 
-        actionButton.classList.add('hidden');
+        ui.elements.actionButton.classList.add('hidden');
         // Wait for the card dealing animation to complete before flipping the Babu's card.
         // This ensures the flip animation is visible.
-        const dealTime = 150 * playerCards.length + 400; // Staggered deal time + buffer
+        const dealTime = 150 * ui.elements.playerCards.length + 400; // Staggered deal time + buffer
         setTimeout(promptBabuToInstruct, dealTime);
     }
 
@@ -184,28 +127,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setActivePlayer(babuIndex);
         // Flip Babu's card immediately
-        playerCards[babuIndex].classList.add('flipped', 'babu-reveal');
-        playSound(sounds.flip);
-        updateStatusMessage(`A royal decree! ${babuName}, the Babu, must secretly command the Police.`);
-        babuInstructionPanel.classList.remove('hidden');
+        ui.elements.playerCards[babuIndex].classList.add('flipped', 'babu-reveal');
+        ui.playSound(ui.sounds.flip);
+        ui.updateStatusMessage(`A royal decree! ${babuName}, the Babu, must secretly command the Police.`);
+        const panel = ui.elements.babuInstructionPanel;
+        panel.classList.remove('hidden', 'animate-slide-up');
+        panel.classList.add('animate-slide-down');
     }
 
     function handleBabuInstruction(target) {
         if (gameState !== 'BABU_INSTRUCTS') return;
 
         targetRoleName = target;
-        babuInstructionPanel.classList.add('hidden');
+        const panel = ui.elements.babuInstructionPanel;
+        panel.classList.remove('animate-slide-down');
+        panel.classList.add('animate-slide-up');
+        panel.addEventListener('animationend', (e) => {
+            if (e.target === panel) { // Ensure it's the panel's animation, not a child's
+                panel.classList.add('hidden');
+            }
+        }, { once: true });
         revealRoles();
     }
     function revealRoles() {
         const policeIndex = playerRoles.findIndex(r => r.name === 'Police');
 
-        updateStatusMessage(`The order is given! The loyal Police is revealed...`);
+        ui.updateStatusMessage(`The order is given! The loyal Police is revealed...`);
 
         // Flip Police's card
         setTimeout(() => {
-            playerCards[policeIndex].classList.add('flipped', 'police-reveal');
-            playSound(sounds.flip);
+            ui.elements.playerCards[policeIndex].classList.add('flipped', 'police-reveal');
+            ui.playSound(ui.sounds.flip);
             setActivePlayer(policeIndex);
             promptPoliceToGuess(policeIndex);
         }, 1500);
@@ -213,12 +165,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function promptPoliceToGuess(policeIndex) {
         gameState = 'POLICE_GUESS';
-        actionButton.classList.add('hidden');
+        ui.elements.actionButton.classList.add('hidden');
         const policeName = players[policeIndex].name;
-        updateStatusMessage(`${policeName}, your orders are clear: Unmask the ${targetRoleName}!`);
+        ui.updateStatusMessage(`${policeName}, your orders are clear: Unmask the ${targetRoleName}!`);
 
 
-        playerCards.forEach((card, index) => {
+        ui.elements.playerCards.forEach((card, index) => {
             if (!card.classList.contains('flipped')) {
                 card.classList.add('is-clickable', 'is-waiting-for-guess');
                 card.addEventListener('click', handleGuess);
@@ -231,10 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState !== 'POLICE_GUESS') return;
 
         const guessedCard = event.currentTarget;
-        const guessedIndex = Array.from(playerCards).indexOf(guessedCard);
+        const guessedIndex = Array.from(ui.elements.playerCards).indexOf(guessedCard);
 
         // Disable further clicks
-        playerCards.forEach(card => {
+        ui.elements.playerCards.forEach(card => {
             card.classList.remove('is-clickable', 'is-waiting-for-guess');
             card.removeEventListener('click', handleGuess); // This is important
         });
@@ -247,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Animate the guess
         if (guessedIndex === targetIndex) {
             guessedCard.classList.add('animate-correct');
-            playSound(sounds.correct);
+            ui.playSound(ui.sounds.correct);
             // Celebrate the correct guess!
             if (typeof confetti === 'function') {
                 confetti({
@@ -259,29 +211,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             guessedCard.classList.add('animate-shake');
-            playSound(sounds.wrong);
+            ui.playSound(ui.sounds.wrong);
         }
 
-        const policeBasePoints = roles.find(r => r.name === 'Police').points;
         let roundScores = playerRoles.map(r => r.points);
 
         if (guessedIndex === targetIndex) {
             // Correct Guess
-            let message = `Justice is served! ${targetPlayerName} was the ${targetRoleName}.`;
+            ui.updateStatusMessage(`Justice is served! ${targetPlayerName} was the ${targetRoleName}.`);
             roundScores[targetIndex] = 0; // The caught person gets 0.
-
-            // If Dakat was the target and was found, the Chor escapes and gets points.
-            if (targetRoleName === 'Dakat') {
-                message += ` The Chor slipped away in the chaos!`;
-                roundScores[chorIndex] = policeBasePoints;
-            }
-            updateStatusMessage(message);
         } else {
             // Incorrect Guess
-            updateStatusMessage(`A costly mistake! The ${targetRoleName} has escaped justice.`);
-            // The target who escaped gets their own points PLUS the Police's points.
-            roundScores[targetIndex] += policeBasePoints;
-            roundScores[policeIndex] = 0; // Police gets 0 for failing.
+            ui.updateStatusMessage(`A costly mistake! The ${targetRoleName} has escaped justice.`);
+            roundScores[policeIndex] = 0;
         }
 
         // Update main scores
@@ -300,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function revealAllCards(roundScores) {
         setActivePlayer(-1); // Clear active player highlight
         let cardsToFlip = [];
-        playerCards.forEach((card, index) => {
+        ui.elements.playerCards.forEach((card, index) => {
             if (!card.classList.contains('flipped')) {
                 cardsToFlip.push({ card, index });
             }
@@ -320,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     pointsSpan.textContent = `${finalPoints} pts`;
                 }
                 card.classList.add('flipped');
-                playSound(sounds.flip);
+                ui.playSound(ui.sounds.flip);
             }, delay);
         });
 
@@ -332,44 +274,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showDetailedScoreboardModal() {
-        modalOverlay.classList.remove('hidden');
-        winnerBanner.classList.add('hidden'); // Hide winner banner during round results
-        modalContent.classList.add('animate-slide-in');
+        ui.elements.modalOverlay.classList.remove('hidden');
+        ui.elements.winnerBanner.classList.add('hidden'); // Hide winner banner during round results
+        ui.elements.modalContent.classList.add('animate-slide-in');
 
-        // Reset podium styles from a potential previous game over
-        modalScoreboardGrid.classList.remove('is-podium');
-        modalScoreboardGrid.style.gridTemplateColumns = '2fr 1.5fr 1.5fr 1.5fr';
+        ui.elements.modalScoreboardGrid.classList.remove('is-podium');
 
-        modalTitle.textContent = `Round ${roundNumber} of ${MAX_ROUNDS} Results`;
+        ui.elements.modalTitle.textContent = `Round ${roundNumber} of ${MAX_ROUNDS} Results`;
 
         if (roundNumber >= MAX_ROUNDS) {
-            nextRoundButton.textContent = 'Show Final Results';
-            nextRoundButton.classList.add('is-waiting');
+            ui.elements.nextRoundButton.textContent = 'Show Final Results';
+            ui.elements.nextRoundButton.classList.add('is-waiting');
         } else {
-            nextRoundButton.textContent = 'Play Next Round';
-            nextRoundButton.classList.add('is-waiting');
+            ui.elements.nextRoundButton.textContent = 'Play Next Round';
+            ui.elements.nextRoundButton.classList.add('is-waiting');
         }
 
         let gridHTML = `
-            <div class="header">Player</div>
-            <div class="header">Role</div>
-            <div class="header score-value">Round Points</div>
-            <div class="header score-value">New Total</div>
+            <div class="header-row">
+                <div class="header">Player</div>
+                <div class="header">Role</div>
+                <div class="header score-value">Round Points</div>
+                <div class="header score-value">New Total</div>
+            </div>
         `;
 
         players.forEach((player, index) => {
             const role = playerRoles[index];
             const roundPoints = player.lastRoundScore;
             const sign = roundPoints >= 0 ? '+' : '';
+            const rowDelay = 150 * index;
+            const popDelay1 = rowDelay + 250; // Pop after the row slides in
+            const popDelay2 = popDelay1 + 100;
 
             gridHTML += `
-                <div class="player-name-cell">${player.name}</div>
-                <div>${role.icon} ${role.name}</div>
-                <div class="score-value animate-pop" style="animation-delay: ${100 * index}ms">${sign}${roundPoints}</div>
-                <div class="score-value animate-pop" style="animation-delay: ${100 * index + 50}ms">${player.score}</div>
+                <div class="player-result-row animate-slide-in-left" style="animation-delay: ${rowDelay}ms">
+                    <div class="player-name-cell">${player.name}</div>
+                    <div class="player-role-cell">${role.icon} ${role.name}</div>
+                    <div class="player-round-score-cell score-value animate-pop" style="animation-delay: ${popDelay1}ms">${sign}${roundPoints}</div>
+                    <div class="player-total-score-cell score-value animate-pop" style="animation-delay: ${popDelay2}ms">${player.score}</div>
+                </div>
             `;
         });
-        modalScoreboardGrid.innerHTML = gridHTML;
+        ui.elements.modalScoreboardGrid.innerHTML = gridHTML;
     }
 
     function getOrdinal(n) {
@@ -379,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function celebrateWinner() {
-        playSound(sounds.win);
+        ui.playSound(ui.sounds.win);
         // A more grand confetti celebration
         const end = Date.now() + (3 * 1000);
         const colors = ['#d4af37', '#ffd700', '#f1c40f', '#ffffff'];
@@ -410,15 +357,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showGameOverModal() {
         gameState = 'GAME_OVER';
-        modalTitle.textContent = 'Final Results!';
-        nextRoundButton.textContent = 'Play Again?';
+        ui.elements.modalTitle.textContent = 'Final Results!';
+        ui.elements.nextRoundButton.textContent = 'Play Again?';
 
         const finalRankings = [...players].sort((a, b) => b.score - a.score);
 
         // Clear previous content and set up for podium
-        modalScoreboardGrid.innerHTML = '';
-        modalScoreboardGrid.style.gridTemplateColumns = '1fr'; // Reset from previous round
-        modalScoreboardGrid.classList.add('is-podium');
+        ui.elements.modalScoreboardGrid.innerHTML = '';
+        ui.elements.modalScoreboardGrid.classList.add('is-podium');
 
         const podiumContainer = document.createElement('div');
         podiumContainer.className = 'podium-container';
@@ -429,8 +375,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show winner banner and celebrate
         if (finalRankings.length > 0) {
             const winner = finalRankings[0];
-            winnerBanner.innerHTML = `🏆 <span class="winner-name">${winner.name}</span> is the Grand Champion! 🏆`;
-            winnerBanner.classList.remove('hidden');
+            ui.elements.winnerBanner.innerHTML = `🏆 <span class="winner-name">${winner.name}</span> is the Grand Champion! 🏆`;
+            ui.elements.winnerBanner.classList.remove('hidden');
             celebrateWinner();
         }
 
@@ -461,30 +407,34 @@ document.addEventListener('DOMContentLoaded', () => {
             otherRanksList.innerHTML = otherRanksHTML;
         }
 
-        modalScoreboardGrid.appendChild(podiumContainer);
+        ui.elements.modalScoreboardGrid.appendChild(podiumContainer);
         if (finalRankings.length > 3) {
-            modalScoreboardGrid.appendChild(otherRanksList);
+            ui.elements.modalScoreboardGrid.appendChild(otherRanksList);
         }
     }
 
-    actionButton.addEventListener('click', () => {
+    ui.elements.actionButton.addEventListener('click', () => {
         if (gameState === 'INITIAL') {
-            actionButton.classList.remove('is-waiting');
-            startRound();
-            actionButton.classList.add('hidden');
+            const button = ui.elements.actionButton;
+            button.classList.remove('is-waiting'); // Stop pulsing
+            button.classList.add('animate-zoom-out');
+            button.addEventListener('animationend', () => {
+                startRound(); // This function will add the 'hidden' class
+                button.classList.remove('animate-zoom-out'); // Clean up
+            }, { once: true });
         }
     });
 
     // Add listeners for Babu's instruction buttons
-    instructChorButton.addEventListener('click', () => handleBabuInstruction('Chor'));
-    instructDakatButton.addEventListener('click', () => handleBabuInstruction('Dakat'));
+    ui.elements.instructChorButton.addEventListener('click', () => handleBabuInstruction('Chor'));
+    ui.elements.instructDakatButton.addEventListener('click', () => handleBabuInstruction('Dakat'));
 
     // Add listener for the initial game start button
-    startGameButton.addEventListener('click', initializeGame);
+    ui.elements.startGameButton.addEventListener('click', initializeGame);
 
     // Add listener for the modal's next round button
-    nextRoundButton.addEventListener('click', () => {
-        nextRoundButton.classList.remove('is-waiting');
+    ui.elements.nextRoundButton.addEventListener('click', () => {
+        ui.elements.nextRoundButton.classList.remove('is-waiting');
         if (gameState === 'GAME_OVER') {
             location.reload(); // Easiest way to reset the game
             return;
@@ -493,8 +443,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (roundNumber >= MAX_ROUNDS) {
             showGameOverModal();
         } else {
-            modalOverlay.classList.add('hidden');
-            modalContent.classList.remove('animate-slide-in');
+            ui.elements.modalOverlay.classList.add('hidden');
+            ui.elements.modalContent.classList.remove('animate-slide-in');
             startRound();
         }
     });
@@ -503,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('button').forEach(button => {
         button.addEventListener('mousedown', () => {
             button.classList.add('is-pressed');
-            playSound(sounds.click);
+            ui.playSound(ui.sounds.click);
         });
         button.addEventListener('mouseup', () => button.classList.remove('is-pressed'));
         button.addEventListener('mouseleave', () => button.classList.remove('is-pressed'));
@@ -511,19 +461,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Rules Modal Logic ---
     function showRules() {
-        rulesModalOverlay.classList.remove('hidden');
-        rulesModalContent.classList.add('animate-slide-in');
+        ui.elements.rulesModalOverlay.classList.remove('hidden');
+        ui.elements.rulesModalContent.classList.add('animate-slide-in');
     }
 
     function hideRules() {
-        rulesModalOverlay.classList.add('hidden');
-        rulesModalContent.classList.remove('animate-slide-in');
+        ui.elements.rulesModalOverlay.classList.add('hidden');
+        ui.elements.rulesModalContent.classList.remove('animate-slide-in');
     }
 
-    howToPlayButton.addEventListener('click', showRules);
-    closeRulesButton.addEventListener('click', hideRules);
-    rulesModalOverlay.addEventListener('click', (event) => {
-        if (event.target === rulesModalOverlay) {
+    ui.elements.howToPlayButton.addEventListener('click', showRules);
+    ui.elements.closeRulesButton.addEventListener('click', hideRules);
+    ui.elements.rulesModalOverlay.addEventListener('click', (event) => {
+        if (event.target === ui.elements.rulesModalOverlay) {
             hideRules();
         }
     });
