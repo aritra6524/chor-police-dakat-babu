@@ -28,7 +28,7 @@ body {
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"), radial-gradient(circle, var(--color-bg-gradient-start), var(--color-bg) 80%);
     color: var(--color-text-dark);
     margin: 0;
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 .hidden {
@@ -57,14 +57,16 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     width: 90%;
+    width: 95%;
+    box-sizing: border-box; /* Ensure padding is included in width calculation */
 }
 
 .setup-container {
-    max-width: 600px;
+    max-width: 750px;
 }
 
 .game-container {
-    max-width: 800px;
+    max-width: 1100px;
 }
 
 .subtitle {
@@ -182,6 +184,40 @@ h1 {
     100% { opacity: 1; transform: translateY(0); }
 }
 
+/* Animation for Babu's instruction panel */
+#babu-instruction-panel.animate-slide-down {
+    animation: slide-down-reveal 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) forwards;
+}
+
+#babu-instruction-panel.animate-slide-up {
+    animation: slide-up-conceal 0.4s ease-out forwards;
+}
+
+@keyframes slide-down-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        margin-top: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        margin-top: 15px;
+    }
+}
+
+@keyframes slide-up-conceal {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+        margin-top: 15px;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+        margin-top: 0;
+    }
+}
 
 #babu-instruction-panel {
     display: flex;
@@ -216,12 +252,14 @@ h1 {
 .game-board {
     display: flex;
     justify-content: space-around;
+    flex-wrap: wrap;
     gap: 15px;
-    margin-bottom: 30px;
+    margin-bottom: 70px; /* Further increased space for the largest screens */
     perspective: 1000px;
 }
 
 .player-area {
+    width: 125px; /* Match card width for alignment */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -445,11 +483,6 @@ h1 {
     box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); /* Raw color for shadow is ok */
 }
 
-.game-container {
-    position: relative;
-    padding-bottom: 70px; /* Space for the persistent scoreboard */
-}
-
 #action-button.is-waiting {
     animation: button-pulse-green 2s infinite;
 }
@@ -490,18 +523,43 @@ h1 {
 }
 
 .persistent-scoreboard {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: rgba(139, 69, 19, 0.08); /* Raw color for tint is ok */
-    padding: 10px 30px;
-    box-sizing: border-box;
     display: flex;
     justify-content: space-around;
-    border-radius: 0 0 15px 15px;
-    font-size: 0.9em;
-    font-weight: 600;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 20px;
+    background: rgba(139, 69, 19, 0.08); /* Raw color for tint is ok */
+    padding: 10px;
+    box-sizing: border-box;
+    border-radius: 15px;
+}
+
+.score-entry {
+    width: 125px; /* Match player-area width */
+    text-align: center;
+    font-size: 1em; /* Make score a bit more prominent */
+    font-weight: 700; /* Bolder for clarity */
+    color: var(--color-text-dark); /* Use darker text for better contrast */
+}
+
+.score-entry.animate-score-update {
+    animation: score-pop-update 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes score-pop-update {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3) translateY(-3px); color: var(--color-green); }
+    100% { transform: scale(1); }
+}
+
+/* Animation for action button disappearing */
+@keyframes zoom-out-disappear {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.5); }
+}
+
+#action-button.animate-zoom-out {
+    animation: zoom-out-disappear 0.4s cubic-bezier(0.550, 0.085, 0.680, 0.530) forwards;
 }
 
 /* Modal Styles */
@@ -528,7 +586,7 @@ h1 {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
     text-align: center;
     width: 90%;
-    max-width: 700px;
+    max-width: 900px;
     max-height: 90vh; /* Can't be taller than 90% of the viewport height */
     overflow-y: auto; /* Add a scrollbar if content overflows */
     position: relative; /* For animations */
@@ -542,7 +600,7 @@ h1 {
 }
 
 #rules-modal-content {
-    max-width: 850px;
+    max-width: 1000px;
 }
 
 #rules-modal-content h3 {
@@ -663,20 +721,54 @@ h1 {
 }
 
 .modal-scoreboard-grid {
-    display: grid;
-    /* Player, Role, Round Pts, Total Pts */
-    grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr; 
-    gap: 15px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
     margin-bottom: 30px;
     font-size: 1.1em;
     text-align: left;
+    background-color: rgba(139, 69, 19, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(139, 69, 19, 0.1);
 }
 
-.modal-scoreboard-grid .header {
+.header-row, .player-result-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr;
+    gap: 10px;
+    padding: 10px 15px;
+    align-items: center;
+}
+
+.header-row {
     font-weight: 700;
     color: var(--color-text-medium);
     padding-bottom: 10px;
     border-bottom: 2px solid rgba(139, 69, 19, 0.2); /* Raw color for tint is ok */
+}
+
+.player-result-row.animate-slide-in-left {
+    opacity: 0; /* Initial state */
+    animation: slide-in-left-reveal 0.6s cubic-bezier(0.250, 0.460, 0.450, 0.940) forwards;
+}
+
+@keyframes slide-in-left-reveal {
+    from {
+        opacity: 0;
+        transform: translateX(-40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+.player-result-row {
+    background-color: var(--color-container-bg);
+}
+
+.player-result-row:nth-child(even) {
+    background-color: #fffbf0; /* A slightly different paper for inputs */
 }
 
 .modal-scoreboard-grid.is-podium {
@@ -750,12 +842,12 @@ h1 {
     animation-delay: 0.4s;
 }
 
-.modal-scoreboard-grid .player-name-cell {
+.player-name-cell {
     font-weight: 600;
     color: var(--color-text-dark);
 }
 
-.modal-scoreboard-grid .score-value {
+.score-value {
     justify-self: flex-end;
     font-weight: 600;
 }
@@ -779,7 +871,7 @@ h1 {
     text-align: left;
 }
 
-.modal-scoreboard-grid .score-value.animate-pop {
+.score-value.animate-pop {
     animation: pop-in 0.5s ease-out;
 }
 
@@ -814,34 +906,305 @@ h1 {
     box-shadow: 0 6px 20px rgba(41, 128, 185, 0.4); /* Raw color for shadow is ok */
 }
 
+/* Rotate Device Prompt */
+#rotate-prompt {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-bg);
+    z-index: 2000; /* Above everything else */
+    display: none; /* Hidden by default, shown by media query */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: var(--color-text-dark);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.rotate-prompt-content {
+    font-family: var(--font-heading);
+    font-size: 1.5em;
+    color: var(--color-heading);
+}
+
+.rotate-prompt-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+    fill: var(--color-heading);
+    animation: gentle-spin 4s linear infinite;
+}
+
+@keyframes gentle-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
 /* --- Responsive Design --- */
 
 /* For short, wide screens (like laptops) to prevent vertical scrolling */
 @media (max-height: 850px) and (min-width: 1024px) {
     body, .modal-overlay {
-        /* Align to top instead of center to give more room */
-        align-items: flex-start;
+        /* Allow vertical centering by removing the top-alignment override */
         padding-top: 2vh;
+        padding-bottom: 2vh;
     }
-    .game-container, .setup-container, .modal-content {
-        /* Scale the entire component down slightly */
-        transform: scale(0.9);
-        transform-origin: center top;
+    .game-container, .setup-container {
+        padding: 25px;
+    }
+    .player-card {
+        width: 110px;
+        height: 170px;
+    }
+    .player-area, .score-entry {
+        width: 110px;
+    }
+    .game-board {
+        margin-bottom: 40px; /* Increased space for typical laptop screens */
+    }
+    .modal-content {
+        padding: 20px 30px;
+    }
+    .modal-content h2 {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
+}
+
+/* For short screens (like landscape phones) to prevent scrolling */
+@media (max-height: 500px) and (orientation: landscape) {
+    body {
+        /* Re-center content vertically now that components are more compact */
+        padding-top: 1vh;
+        padding-bottom: 1vh;
+        overflow-y: hidden; /* Prevent scrolling as requested */
+    }
+
+    .game-container, .setup-container {
+        padding: 15px;
+        border-width: 5px;
+        width: 95%;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    h1 { font-size: 1.5em; margin-bottom: 10px; }
+    .subtitle { font-size: 0.9em; margin-top: -5px; margin-bottom: 15px; }
+
+    #player-inputs {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 15px 0;
+    }
+    #player-inputs input { padding: 10px; font-size: 0.9em; }
+    .setup-actions { margin-top: 20px; }
+
+    .status-panel { padding: 8px; margin-bottom: 15px; min-height: auto; }
+    #status-message { font-size: 1em; line-height: 1.2; }
+    #babu-instruction-panel { margin-top: 8px; gap: 10px; }
+
+    .game-board {
+        /* This is crucial: override the tablet's 2x2 grid */
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .player-area { width: 90px; gap: 8px; }
+    .player-name { font-size: 0.85em; }
+    .player-card { width: 90px; height: 135px; }
+    .score-entry { width: 90px; }
+
+    .card-front { font-size: 2.5em; }
+    .card-back .icon { font-size: 2em; margin-bottom: 5px; }
+    .card-back .role { font-size: 1em; }
+    .card-back .points { font-size: 0.8em; margin-top: 5px; }
+
+    #start-game-button, #action-button, #next-round-button, .instruction-button, .secondary-button {
+        padding: 10px 18px;
+        font-size: 0.9em;
+    }
+
+    .persistent-scoreboard {
+        margin-top: 15px;
+        padding: 8px;
+        font-size: 0.8em;
+    }
+
+    /* Adjust modals for short screens */
+    .modal-overlay { padding-top: 1vh; padding-bottom: 1vh; }
+    .modal-content { padding: 10px; max-height: 98vh; }
+    .modal-content h2 { font-size: 1.3em; margin-bottom: 10px; }
+    .modal-scoreboard-grid { margin-bottom: 15px; }
+
+    .winner-banner {
+        font-size: 1.1em;
+        padding: 8px;
+        margin-bottom: 10px;
+    }
+
+    .podium-container { min-height: 140px; margin-bottom: 10px; gap: 2px; }
+    .podium-item { padding: 8px 5px; }
+    .podium-item .podium-rank { font-size: 1.2em; margin-bottom: 5px; }
+    .podium-item .podium-name { font-size: 0.9em; }
+    .podium-item .podium-score { font-size: 0.8em; }
+    .podium-item.rank-1 { height: 100px; }
+    .podium-item.rank-2 { height: 90px; }
+    .podium-item.rank-3 { height: 75px; }
+
+    .rules-grid .role-card { padding: 10px; gap: 5px; }
+    .rules-grid .role-card p { font-size: 0.8em; }
+}
+
+/* For VERY short screens (like small landscape phones) to prevent scrolling */
+@media (max-height: 420px) and (orientation: landscape) {
+    body {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    .game-container, .setup-container {
+        padding: 10px;
+        border-width: 4px;
+    }
+    h1 { font-size: 1.25em; margin-bottom: 2px; }
+    .subtitle { display: none; } /* Hide subtitle to save precious space */
+
+    .status-panel { padding: 6px; margin-bottom: 2px; }
+    #status-message { font-size: 0.85em; }
+
+    .game-board {
+        gap: 8px;
+        margin-bottom: 30px; /* Increased space for short, wide screens */
+    }
+    .player-area { width: 75px; gap: 5px; }
+    .player-name { font-size: 0.75em; }
+    .player-card { width: 75px; height: 115px; } /* Significantly smaller */
+    .score-entry { width: 75px; }
+
+    .card-front { font-size: 1.9em; }
+    .card-back .icon { font-size: 1.7em; margin-bottom: 3px; }
+    .card-back .role { font-size: 0.8em; }
+    .card-back .points { font-size: 0.65em; margin-top: 3px; }
+
+    #start-game-button, #action-button, #next-round-button, .instruction-button, .secondary-button {
+        padding: 8px 15px;
+        font-size: 0.8em;
+    }
+    .persistent-scoreboard { margin-top: 10px; padding: 5px; font-size: 0.75em; }
+
+    /* Reduce hover effect to prevent any potential layout shifts */
+    .player-card.is-clickable:hover {
+        transform: translateY(-4px);
+    }
+
+    /* Create a more compact "correct guess" animation to prevent overlap */
+    @keyframes correct-guess-glow-compact {
+        0% {
+            box-shadow: 0 0 0 rgba(46, 204, 113, 0);
+            transform: scale(1) rotateY(180deg);
+        }
+        10% {
+            transform: scale(1.05) rotateY(180deg); /* Smaller scale */
+        }
+        50% {
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.8), 0 0 25px rgba(46, 204, 113, 0.6); /* Smaller glow */
+            transform: scale(1.02) rotateY(180deg);
+        }
+        100% {
+            box-shadow: 0 0 0 rgba(46, 204, 113, 0);
+            transform: scale(1) rotateY(180deg);
+        }
+    }
+    .player-card.animate-correct .card-inner {
+        animation-name: correct-guess-glow-compact;
+    }
+
+    /* Further compact modal styles */
+    .winner-banner {
+        font-size: 1em;
+        padding: 5px;
+        margin-bottom: 5px;
+    }
+    .modal-content { padding: 8px; }
+    .modal-content h2 { font-size: 1.15em; margin-bottom: 5px; }
+    .modal-scoreboard-grid { margin-bottom: 8px; }
+    .podium-container {
+        min-height: 120px;
+        margin-bottom: 5px;
+    }
+    /* Add size reduction for podium content to prevent overflow */
+    .podium-item { padding: 4px 2px; }
+    .podium-item .podium-rank { font-size: 0.9em; margin-bottom: 1px; }
+    .podium-item .podium-name { font-size: 0.75em; }
+    .podium-item .podium-score { font-size: 0.65em; }
+    .podium-item.rank-1 { height: 90px; }
+    .podium-item.rank-2 { height: 75px; }
+    .podium-item.rank-3 { height: 60px; }
+}
+
+/* For the SMALLEST screens (iPhone SE landscape) to guarantee visibility */
+@media (max-height: 380px) and (orientation: landscape) {
+    .game-container, .setup-container {
+        padding: 6px;
+        border-width: 3px;
+    }
+    h1 { font-size: 1.15em; margin-bottom: 2px; }
+
+    .status-panel { padding: 5px; margin-bottom: 6px; }
+    #status-message { font-size: 0.8em; }
+
+    .game-board {
+        gap: 5px; margin-bottom: 30px; /* Further increased space to push scoreboard down */
+    }
+    .player-area { width: 70px; gap: 2px; }
+    .player-name { font-size: 0.7em; }
+    .player-card { width: 70px; height: 110px; }
+    .score-entry { width: 70px; }
+
+    .card-front { font-size: 1.7em; }
+    .card-back .icon { font-size: 1.5em; margin-bottom: 2px; }
+    .card-back .role { font-size: 0.75em; }
+    .card-back .points { font-size: 0.6em; margin-top: 2px; }
+
+    #start-game-button, #action-button, #next-round-button, .instruction-button, .secondary-button {
+        padding: 6px 12px; font-size: 0.75em;
+    }
+    .persistent-scoreboard { margin-top: 8px; padding: 4px; font-size: 0.7em; }
+
+    /* Compact modal styles for the shortest screens to prevent scrolling */
+    .winner-banner {
+        font-size: 0.9em;
+        padding: 4px;
+        margin-bottom: 4px;
+    }
+    .modal-content { padding: 8px 10px; }
+    .modal-content h2 { font-size: 1.1em; margin-bottom: 5px; }
+    .modal-scoreboard-grid {
+        font-size: 0.85em;
+        margin-bottom: 10px;
+    }
+    .podium-container { min-height: 100px; margin-bottom: 5px; }
+    .podium-item { padding: 2px; }
+    .podium-item .podium-rank { font-size: 0.9em; margin-bottom: 1px; }
+    .podium-item .podium-name { font-size: 0.7em; }
+    .podium-item .podium-score { font-size: 0.6em; }
+    .podium-item.rank-1 { height: 80px; }
+    .podium-item.rank-2 { height: 65px; }
+    .podium-item.rank-3 { height: 50px; }
+    .header-row, .player-result-row {
+        padding: 5px 10px;
+        gap: 5px;
     }
 }
 
 /* For tablet-sized screens to rearrange the game board */
 @media (max-width: 820px) {
     .game-board {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 25px;
-        justify-items: center; /* Center the cards in the grid cells */
-    }
-    .persistent-scoreboard {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 15px;
+        display: flex;
+        justify-content: space-around;
+        gap: 10px; /* Adjust gap for smaller screens */
     }
     .modal-content {
         padding: 25px 20px;
@@ -857,30 +1220,117 @@ h1 {
     }
 }
 
+/* Show rotate prompt on portrait mobile/tablet */
+@media screen and (max-width: 820px) and (orientation: portrait) {
+    /* Hide the main app content */
+    .setup-container, .game-container, .modal-overlay {
+        display: none !important;
+    }
+
+    /* Show the rotation prompt */
+    #rotate-prompt {
+        display: flex;
+    }
+}
+
 /* For mobile phones */
 @media (max-width: 480px) {
-    .game-container, .setup-container {
-        padding: 20px 15px;
-        border-width: 5px;
+    body {
+        overflow-y: auto; /* Allow vertical scroll if needed */
     }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .subtitle {
+        font-size: 1em;
+    }
+
+    .game-container, .setup-container {
+        padding: 20px 10px;
+        border-width: 5px;
+        width: 95%;
+    }
+
     #player-inputs {
         grid-template-columns: 1fr;
     }
+
+    .setup-actions, #babu-instruction-panel {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+
+    #start-game-button, #action-button, #next-round-button, .instruction-button, .secondary-button {
+        padding: 12px 24px;
+        font-size: 1em;
+        width: 100%;
+        max-width: 300px;
+    }
+
     .game-board {
-        gap: 10px;
+        gap: 15px 10px;
     }
+
     .player-card {
-        width: 70px;
-        height: 110px;
+        width: 75px;
+        height: 115px;
     }
+
     .card-front { font-size: 2.5em; }
-    .card-back .icon { font-size: 1.8em; }
-    .card-back .role { font-size: 0.9em; }
-    .card-back .points { font-size: 0.8em; margin-top: 5px; }
+    .card-back .icon { font-size: 1.8em; margin-bottom: 5px; }
+    .card-back .role { font-size: 0.85em; }
+    .card-back .points { font-size: 0.75em; margin-top: 5px; }
+
     .rules-grid {
         /* On mobile, stack the rules in a single column */
         grid-template-columns: 1fr;
     }
-    .modal-scoreboard-grid { font-size: 0.9em; gap: 10px 5px; }
-    .persistent-scoreboard { font-size: 0.8em; padding: 8px 15px; }
+
+    .modal-content {
+        padding: 20px 15px;
+    }
+    .modal-content h2 {
+        font-size: 1.5em;
+    }
+
+    /* Responsive Round Scoreboard */
+    .header-row { display: none; }
+    .player-result-row {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "name name"
+            "role role"
+            "round total";
+        gap: 5px 10px;
+        padding: 10px;
+    }
+    .player-name-cell { grid-area: name; font-size: 1.1em; }
+    .player-role-cell { grid-area: role; color: var(--color-text-medium); }
+    .player-round-score-cell { grid-area: round; text-align: center; justify-self: center; }
+    .player-total-score-cell { grid-area: total; text-align: center; justify-self: center; }
+
+    .player-round-score-cell::before, .player-total-score-cell::before {
+        display: block;
+        font-size: 0.8em;
+        font-weight: 400;
+        color: var(--color-text-medium);
+    }
+    .player-round-score-cell::before { content: 'Round Pts'; }
+    .player-total-score-cell::before { content: 'Total Pts'; }
+
+    /* Responsive Podium */
+    .podium-container { gap: 2px; min-height: 200px; }
+    .podium-item { width: 32%; padding: 10px 5px; }
+    .podium-item .podium-rank { font-size: 1.4em; margin-bottom: 5px; }
+    .podium-item .podium-name { font-size: 0.9em; }
+    .podium-item.rank-1 { height: 150px; }
+    .podium-item.rank-2 { height: 120px; }
+    .podium-item.rank-3 { height: 90px; }
+    .other-ranks-list { grid-template-columns: auto 1fr auto; font-size: 0.9em; }
+
+    .player-area { width: 75px; }
+    .score-entry { width: 75px; }
 }
