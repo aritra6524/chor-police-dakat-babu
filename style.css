@@ -977,7 +977,7 @@ h1 {
         /* Re-center content vertically now that components are more compact */
         padding-top: 1vh;
         padding-bottom: 1vh;
-        overflow-y: hidden; /* Prevent scrolling as requested */
+        overflow-y: auto; /* Allow scrolling if content overflows */
     }
 
     .game-container, .setup-container {
